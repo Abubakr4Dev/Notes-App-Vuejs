@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory } from "vue-router";
-import HomeView from "../views/NotesView.vue";
 import LoginPage from "@/views/LoginView.vue";
 import RegisterPage from "@/views/RegisterView.vue";
+import { useStore } from "@/stores";
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: "/",
       name: "home",
-      component: HomeView,
+      component: RegisterPage,
     },
     {
       path: "/login",
@@ -19,6 +19,20 @@ const router = createRouter({
       path: "/register",
       name: "register",
       component: RegisterPage,
+    },
+    {
+      path: "/notes",
+      name: "notes",
+      component: () => import("../views/NotesView.vue"), // @
+      beforeEnter(to: any, from: any, next: any) {
+        const store = useStore();
+        console.log(store.getToken);
+        if (!store.getToken) {
+          next({ name: "login" });
+        } else {
+          next();
+        }
+      },
     },
     // {
     //   path: '/about',

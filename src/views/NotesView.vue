@@ -1,22 +1,44 @@
 <script setup lang="ts">
-import AddTodo from "@/components/AddNote.vue";
+import AddNote from "@/components/AddNote.vue";
+import EditNote from "@/components/EditNote.vue";
+import type { INote } from "@/interfaces/notes";
 import { useStore } from "@/stores";
 import { storeToRefs } from "pinia";
 
-
 const store = useStore();
 
-const { displayAdd } = storeToRefs(store);
-
-const openAddModal = () => {
-  displayAdd.value = true;
+const selectedNote: INote = {
+  _id: "",
+  title: "",
+  content: "",
 };
 
+const { displayAddModal, displayEditModal, notes, isLoaded } =
+  storeToRefs(store);
 
+const deleteNote = (id: string, title: string) => {
+  const confirmDelete = window.confirm(
+    `delete note with title: ${title}, are you sure?`
+  );
+  if (!confirmDelete) return;
+
+  store.deleteNote(id);
+};
+
+const openAddModal = () => {
+  displayAddModal.value = true;
+};
+
+const openEditModal = (note: INote) => {
+  selectedNote._id = note._id;
+  selectedNote.title = note.title;
+  selectedNote.content = note.content;
+  displayEditModal.value = true;
+};
 </script>
 
 <template>
-  <main>
+  <main :on-load="isLoaded ? null : store.fetchNotes()">
     <!-- Search bar -->
     <div>
       <button
@@ -47,21 +69,41 @@ const openAddModal = () => {
     <table id="notes-table">
       <colgroup>
         <col span="1" style="width: 20%" />
-        <col span="1" style="width: 55%" />
+        <col span="1" style="width: 50%" />
         <col span="1" style="width: 20%" />
-        <col span="1" style="width: 5%" />
+        <col span="1" style="width: 10%" />
       </colgroup>
-      <tr>
+      <tr class="table-header">
         <th>Title</th>
         <th>Content</th>
         <th>Last Updated</th>
         <th></th>
       </tr>
+      <tr v-for="note in notes" :key="note._id">
+        <th>{{ note.title }}</th>
+        <th>{{ note.content }}</th>
+        <th>{{ note.updatedAt }}</th>
+        <th class="edit-delete" v-if="note">
+          <a href="#" @click="openEditModal(note)">
+            <img src="../assets/images/edit.png" style="width: 22px"
+          /></a>
+          <a href="#" @click="deleteNote(note._id, note.title)">
+            <img src="../assets/images/delete.png" style="width: 22px"
+          /></a>
+        </th>
+      </tr>
     </table>
   </main>
 
-  <!-- open add todo -->
-  <AddTodo v-if="displayAdd"></AddTodo>
+  <!-- open add note -->
+  <AddNote v-if="displayAddModal"></AddNote>
+  <!-- open edit note -->
+  <EditNote
+    v-if="displayEditModal"
+    :_id="selectedNote._id"
+    :title="selectedNote.title"
+    :content="selectedNote.content"
+  ></EditNote>
 </template>
 
 <style>
@@ -95,6 +137,14 @@ tr:hover td {
   background-color: lightblue;
 }
 
+.edit-delete {
+  display: flex;
+  justify-content: space-around;
+}
+
+th {
+  text-align: center;
+}
 /* New Note and Updated Note Animation */
 
 @keyframes new-row {

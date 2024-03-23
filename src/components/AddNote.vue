@@ -1,13 +1,33 @@
 <script setup lang="ts">
+import type { INote } from "@/interfaces/notes";
 import { useStore } from "@/stores";
 import { storeToRefs } from "pinia";
+import { ref } from "vue";
 
 const store = useStore();
 
-const { displayAdd } = storeToRefs(store);
+const { displayAddModal } = storeToRefs(store);
+
+const title = ref<string>();
+const content = ref<string>();
+
+function saveNewNote() {
+  if (!title.value || !content.value) {
+    window.confirm("Please fill out all fields");
+    return;
+  }
+  const noteData: INote = {
+    title: title.value!,
+    content: content.value!,
+  };
+
+  store.addNote(noteData).then(() => {
+    displayAddModal.value = false;
+  });
+}
 
 const closeAddModal = () => {
-  displayAdd.value = false;
+  displayAddModal.value = false;
 };
 </script>
 
@@ -28,7 +48,12 @@ const closeAddModal = () => {
             <p>Title</p>
           </div>
           <div class="right">
-            <input id="addTitle" type="text" class="modal-input" />
+            <input
+              id="addTitle"
+              type="text"
+              class="modal-input"
+              v-model="title"
+            />
           </div>
         </div>
         <div class="row">
@@ -36,7 +61,7 @@ const closeAddModal = () => {
             <p>Content</p>
           </div>
           <div class="right">
-            <textarea id="addContent"></textarea>
+            <textarea id="addContent" v-model="content"></textarea>
           </div>
         </div>
         <p id="addError" class="error"></p>
@@ -44,7 +69,7 @@ const closeAddModal = () => {
       <div class="modal-footer">
         <button
           id="saveAddNoteBtn"
-          onclick="saveNewNote()"
+          @click="saveNewNote()"
           type="button"
           class="action-button"
         >
